@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Textarea } from "@/components/ui/textarea";
 import { 
   StarIcon, 
   Users, 
@@ -28,6 +29,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 // Sample car data
 const carData = {
@@ -124,6 +126,11 @@ const CarDetails = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [pickupDate, setPickupDate] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
+  const [pickupLocation, setPickupLocation] = useState(carData.location.address);
+  const [dropoffLocation, setDropoffLocation] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Calculate total price
   const days = pickupDate && returnDate 
@@ -133,6 +140,49 @@ const CarDetails = () => {
   const insuranceFee = 10 * days;
   const serviceFee = 15;
   const totalPrice = basePrice + insuranceFee + serviceFee;
+
+  const handleBooking = () => {
+    // Check if all required fields are filled
+    if (!pickupDate || !returnDate || !pickupLocation) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields before proceeding.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // In a real application, you'd save this data to state or context
+    // For now, we'll save it to localStorage to simulate persistence
+    const bookingData = {
+      carId,
+      carName: carData.name,
+      pickupDate: pickupDate.toISOString(),
+      returnDate: returnDate.toISOString(),
+      pickupLocation,
+      dropoffLocation: dropoffLocation || pickupLocation, // Use pickup location as default if not specified
+      additionalNotes,
+      totalPrice,
+      basePrice,
+      insuranceFee,
+      serviceFee,
+      days
+    };
+    
+    localStorage.setItem('currentBooking', JSON.stringify(bookingData));
+    
+    // Navigate to the next step in the booking process
+    // In a real app, this would go to a payment gateway like Razorpay
+    toast({
+      title: "Booking Initiated",
+      description: "Redirecting to payment gateway...",
+    });
+    
+    // Simulate redirect delay
+    setTimeout(() => {
+      navigate('/payment');
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -518,7 +568,7 @@ const CarDetails = () => {
                   <div className="space-y-4">
                     {/* Pick-up Date */}
                     <div>
-                      <label className="block text-sm font-medium text-car-darkblue mb-1">Pick-up Date</label>
+                      <label className="block text-sm font-medium text-car-darkblue mb-1">Pick-up Date*</label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -539,6 +589,7 @@ const CarDetails = () => {
                             onSelect={setPickupDate}
                             initialFocus
                             className="p-3"
+                            disabled={(date) => date < new Date()}
                           />
                         </PopoverContent>
                       </Popover>
@@ -546,7 +597,7 @@ const CarDetails = () => {
                     
                     {/* Return Date */}
                     <div>
-                      <label className="block text-sm font-medium text-car-darkblue mb-1">Return Date</label>
+                      <label className="block text-sm font-medium text-car-darkblue mb-1">Return Date*</label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -567,6 +618,7 @@ const CarDetails = () => {
                             onSelect={setReturnDate}
                             initialFocus
                             className="p-3"
+                            disabled={(date) => pickupDate ? date <= pickupDate : date <= new Date()}
                           />
                         </PopoverContent>
                       </Popover>
@@ -574,11 +626,48 @@ const CarDetails = () => {
                     
                     {/* Pickup Location */}
                     <div>
-                      <label className="block text-sm font-medium text-car-darkblue mb-1">Pick-up Location</label>
-                      <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md p-2">
-                        <MapPin className="h-4 w-4 text-car-gray mr-2" />
-                        <span className="text-car-gray text-sm">{carData.location.address}</span>
+                      <label className="block text-sm font-medium text-car-darkblue mb-1">Pick-up Location*</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-car-gray" />
+                        <input 
+                          type="text" 
+                          value={pickupLocation} 
+                          onChange={(e) => setPickupLocation(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-car-blue focus:border-transparent"
+                          placeholder="Enter pickup location"
+                        />
                       </div>
+                    </div>
+                    
+                    {/* Drop-off Location (Optional) */}
+                    <div>
+                      <label className="block text-sm font-medium text-car-darkblue mb-1">
+                        Drop-off Location (Optional)
+                      </label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-car-gray" />
+                        <input 
+                          type="text" 
+                          value={dropoffLocation} 
+                          onChange={(e) => setDropoffLocation(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-car-blue focus:border-transparent"
+                          placeholder="Same as pickup location"
+                        />
+                      </div>
+                      <p className="text-xs text-car-gray mt-1">Leave empty if same as pickup</p>
+                    </div>
+                    
+                    {/* Additional Notes */}
+                    <div>
+                      <label className="block text-sm font-medium text-car-darkblue mb-1">
+                        Additional Notes (Optional)
+                      </label>
+                      <Textarea 
+                        value={additionalNotes}
+                        onChange={(e) => setAdditionalNotes(e.target.value)}
+                        placeholder="Any special requests or information"
+                        className="w-full min-h-[60px]"
+                      />
                     </div>
                     
                     {/* Price Breakdown */}
@@ -626,9 +715,10 @@ const CarDetails = () => {
                     
                     <Button 
                       className="w-full bg-car-orange hover:bg-car-orange/90 mt-4"
-                      disabled={!pickupDate || !returnDate}
+                      disabled={!pickupDate || !returnDate || !pickupLocation}
+                      onClick={handleBooking}
                     >
-                      Continue to Book
+                      Book Now
                     </Button>
                     
                     {/* Cancellation Policy */}
