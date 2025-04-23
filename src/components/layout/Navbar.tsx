@@ -1,11 +1,22 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, Car } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthAction = () => {
+    if (user) {
+      signOut();
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
@@ -31,11 +42,35 @@ const Navbar = () => {
             <Link to="/contact" className="px-3 py-2 text-sm font-medium text-car-darkblue hover:text-car-blue">
               Contact
             </Link>
-            <Button variant="outline" className="ml-4 flex items-center">
-              <User className="mr-2 h-4 w-4" />
-              <span>Sign In</span>
-            </Button>
-            <Button className="bg-car-blue hover:bg-car-blue/90">Register</Button>
+            {user ? (
+              <Button 
+                variant="outline" 
+                className="ml-4" 
+                onClick={handleAuthAction}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="ml-4" 
+                  onClick={() => navigate('/auth')}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Sign In
+                </Button>
+                <Button 
+                  className="bg-car-blue hover:bg-car-blue/90"
+                  onClick={() => {
+                    navigate('/auth');
+                  }}
+                >
+                  Register
+                </Button>
+              </>
+            )}
           </div>
           
           <div className="md:hidden flex items-center">
@@ -50,7 +85,6 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
@@ -85,13 +119,44 @@ const Navbar = () => {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-5">
-              <Button variant="outline" className="w-full justify-center">
-                <User className="mr-2 h-4 w-4" />
-                <span>Sign In</span>
-              </Button>
-            </div>
-            <div className="mt-3 px-5">
-              <Button className="w-full bg-car-blue hover:bg-car-blue/90">Register</Button>
+              {user ? (
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-center"
+                  onClick={() => {
+                    handleAuthAction();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-center"
+                    onClick={() => {
+                      navigate('/auth');
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Sign In
+                  </Button>
+                  <div className="mt-3 px-5">
+                    <Button 
+                      className="w-full bg-car-blue hover:bg-car-blue/90"
+                      onClick={() => {
+                        navigate('/auth');
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      Register
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
