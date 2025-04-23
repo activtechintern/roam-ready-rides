@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, CarFront } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -24,7 +25,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <Car className="h-8 w-8 text-car-blue" />
+              <CarFront className="h-8 w-8 text-car-blue" />
               <span className="ml-2 text-xl font-bold text-car-darkblue">RoamReadyRides</span>
             </Link>
           </div>
