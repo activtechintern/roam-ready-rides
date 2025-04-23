@@ -1,7 +1,8 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Loader2, IndianRupee } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -17,18 +18,16 @@ const Payment = () => {
   const [billingAddress, setBillingAddress] = useState("");
 
   // Get the booking details from location state
-  const bookingDetails = location.state?.bookingDetails;
+  const bookingDetails = location.state?.bookingDetails || JSON.parse(localStorage.getItem('currentBooking') || 'null');
 
   const handlePayment = async () => {
     setLoading(true);
     try {
-      // Simulate payment processing
       toast({
         title: "Processing payment",
         description: "Please wait while we process your payment...",
       });
       
-      // TODO: Integrate actual payment gateway here
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast({
@@ -36,6 +35,8 @@ const Payment = () => {
         description: "Your booking has been confirmed.",
       });
       
+      // Clear the stored booking after successful payment
+      localStorage.removeItem('currentBooking');
       navigate("/booking-confirmation");
     } catch (error) {
       toast({
@@ -59,14 +60,25 @@ const Payment = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full">
-              Return to Home
+            <Button onClick={() => navigate("/search")} className="w-full">
+              Browse Cars
             </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  const { totalPrice, basePrice, insuranceFee, serviceFee } = bookingDetails;
+
+  // Convert prices to INR (assuming the prices are in USD)
+  const exchangeRate = 83; // Example fixed exchange rate USD to INR
+  const pricesInINR = {
+    total: Math.round(totalPrice * exchangeRate),
+    base: Math.round(basePrice * exchangeRate),
+    insurance: Math.round(insuranceFee * exchangeRate),
+    service: Math.round(serviceFee * exchangeRate)
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
@@ -130,25 +142,60 @@ const Payment = () => {
               <QRScanner />
             </TabsContent>
 
-            <div className="mt-6">
-              <Button 
-                onClick={handlePayment} 
-                className="w-full" 
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Complete Payment
-                  </>
-                )}
-              </Button>
+            {/* Price Details */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-medium mb-4">Price Details</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Base Price</span>
+                  <div className="flex items-center">
+                    <IndianRupee className="h-4 w-4 mr-1" />
+                    <span>{pricesInINR.base.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Insurance Fee</span>
+                  <div className="flex items-center">
+                    <IndianRupee className="h-4 w-4 mr-1" />
+                    <span>{pricesInINR.insurance.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Service Fee</span>
+                  <div className="flex items-center">
+                    <IndianRupee className="h-4 w-4 mr-1" />
+                    <span>{pricesInINR.service.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex justify-between font-medium text-lg">
+                    <span>Total Amount</span>
+                    <div className="flex items-center text-car-blue">
+                      <IndianRupee className="h-5 w-5 mr-1" />
+                      <span>{pricesInINR.total.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <Button 
+              onClick={handlePayment} 
+              className="w-full mt-6" 
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing
+                </>
+              ) : (
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Pay ₹{pricesInINR.total.toLocaleString('en-IN')}
+                </>
+              )}
+            </Button>
           </Tabs>
         </CardContent>
       </Card>
