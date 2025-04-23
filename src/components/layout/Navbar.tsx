@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Car } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,29 +43,26 @@ const Navbar = () => {
               Contact
             </Link>
             {user ? (
-              <Button 
-                variant="outline" 
-                className="ml-4" 
-                onClick={handleAuthAction}
-              >
-                <User className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
+              <div className="flex items-center space-x-4">
+                <Link to="/profile" className="flex items-center space-x-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback>{user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </Link>
+                <Button variant="outline" onClick={handleAuthAction}>
+                  Sign Out
+                </Button>
+              </div>
             ) : (
               <>
-                <Button 
-                  variant="outline" 
-                  className="ml-4" 
-                  onClick={() => navigate('/auth')}
-                >
+                <Button variant="outline" onClick={() => navigate('/auth')}>
                   <User className="mr-2 h-4 w-4" />
                   Sign In
                 </Button>
                 <Button 
                   className="bg-car-blue hover:bg-car-blue/90"
-                  onClick={() => {
-                    navigate('/auth');
-                  }}
+                  onClick={() => navigate('/auth')}
                 >
                   Register
                 </Button>
